@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">ConnectChecker</string>
+    <string name="widget_updating">Updating...</string>
+    <string name="widget_out_of_service">No Signal</string>
+    <string name="widget_wifi">Wi-Fi</string>
+    <string name="widget_mobile">Mobile</string>
+    <string name="signal_strong">Signal: Strong</string>
+    <string name="signal_medium">Signal: Fair</string>
+    <string name="signal_weak">Signal: Weak</string>
+    <string name="signal_none">Signal: None</string>
+    <string name="no_permission">No Permission</string>
+    <string name="toast_switch_network">Please toggle Wi-Fi to switch networks.</string>
+
+    <string name="main_title_permission">1. Required Permissions</string>
+    <string name="main_usage_granted">✅ Data Usage: Granted</string>
+    <string name="main_usage_desc">Permission is required to display mobile data usage.</string>
+    <string name="main_btn_usage">Allow Usage Access</string>
+    <string name="main_notif_granted">✅ Notifications: Granted</string>
+    <string name="main_notif_desc">Permission is required for toast messages (Android 13+).</string>
+    <string name="main_btn_notif">Allow Notifications</string>
+    <string name="main_title_start_day">2. Set Billing Cycle Start Date</string>
+    <string name="main_start_day_desc">Set this to match your carrier\'s billing cycle.</string>
+    <string name="main_label_start_day">Start Day</string>
+    <string name="main_day_format">Day %1$d</string>
+    <string name="main_title_widget">3. Place Widget on Home Screen</string>
+    <string name="main_widget_desc">Close the app, then long-press an empty area on your home screen to add the widget.</string>
+    <string name="main_btn_close">Close App</string>
+</resources>

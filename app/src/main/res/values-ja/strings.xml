@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">接続回線確認アプリ</string>
+    <string name="widget_updating">更新中...</string>
+    <string name="widget_out_of_service">圏外</string>
+    <string name="widget_wifi">Wi-Fi</string>
+    <string name="widget_mobile">Mobile</string>
+    <string name="signal_strong">電波: 強</string>
+    <string name="signal_medium">電波: 中</string>
+    <string name="signal_weak">電波: 弱</string>
+    <string name="signal_none">電波: ✕</string>
+    <string name="no_permission">権限なし</string>
+    <string name="toast_switch_network">WiFiをオフ・オンして回線を切り替えて下さい</string>
+
+    <string name="main_title_permission">① 必要な権限の許可</string>
+    <string name="main_usage_granted">✅ 通信量の取得: 許可済み</string>
+    <string name="main_usage_desc">モバイル回線の通信料を表示するために許可が必要です。</string>
+    <string name="main_btn_usage">使用状況へのアクセスを許可</string>
+    <string name="main_notif_granted">✅ 通知（トースト表示）: 許可済み</string>
+    <string name="main_notif_desc">トーストメッセージを表示するために通知の許可が必要です（A13以降）。</string>
+    <string name="main_btn_notif">通知を許可</string>
+    <string name="main_title_start_day">② 通信量の計算起算日を設定</string>
+    <string name="main_start_day_desc">契約携帯会社の起算日に合わせて下さい。</string>
+    <string name="main_label_start_day">開始日</string>
+    <string name="main_day_format">%1$d 日</string>
+    <string name="main_title_widget">③ ホーム画面にウィジェット配置</string>
+    <string name="main_widget_desc">下のボタンでアプリを閉じた後、ホーム画面の何もない場所を「長押し」して、ウィジェットを追加して下さい。</string>
+    <string name="main_btn_close">アプリを閉じる</string>
+</resources>

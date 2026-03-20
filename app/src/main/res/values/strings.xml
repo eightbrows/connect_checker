@@ -4,10 +4,10 @@
     <string name="widget_out_of_service">No Signal</string>
     <string name="widget_wifi">Wi-Fi</string>
     <string name="widget_mobile">Mobile</string>
-    <string name="signal_strong">Signal: Strong</string>
-    <string name="signal_medium">Signal: Fair</string>
-    <string name="signal_weak">Signal: Weak</string>
-    <string name="signal_none">Signal: None</string>
+    <string name="signal_strong">📶: Strong</string>
+    <string name="signal_medium">📶: Fair</string>
+    <string name="signal_weak">📶: Weak</string>
+    <string name="signal_none">📶: None</string>
     <string name="no_permission">No Permission</string>
     <string name="toast_switch_network">Please toggle Wi-Fi to switch networks.</string>
 

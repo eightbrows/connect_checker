@@ -126,7 +126,7 @@ class NetworkWidget : AppWidgetProvider() {
         val trapMark = if (!isAuto) animals.random() else ""
 
         // サブテキスト（ギガ数や電波状況）の下に更新時刻とアイコンを結合
-        val finalSubText = "$subText\n($currentTime$trapMark)"
+        val finalSubText = "$subText\n$currentTime$trapMark"
 
         // UIコンポーネントにテキストと背景色を反映
         views.setTextViewText(R.id.widget_text, statusText)

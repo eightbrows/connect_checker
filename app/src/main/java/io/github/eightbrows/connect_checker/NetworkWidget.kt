@@ -214,7 +214,7 @@ class NetworkWidget : AppWidgetProvider() {
             )
             val bytes = bucket.rxBytes + bucket.txBytes
             formatDataSize(bytes)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             "---"
         }
     }
@@ -223,9 +223,9 @@ class NetworkWidget : AppWidgetProvider() {
     private fun formatDataSize(bytes: Long): String {
         val gb = bytes / (1024.0 * 1024.0 * 1024.0)
         if (gb >= 1.0) {
-            return String.format("%.2f GB", gb)
+            return String.format(Locale.US,"%.2f GB", gb)
         }
         val mb = bytes / (1024.0 * 1024.0)
-        return String.format("%.0f MB", mb)
+        return String.format(Locale.US,"%.0f MB", mb)
     }
 }

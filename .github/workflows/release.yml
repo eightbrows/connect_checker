@@ -1,0 +1,30 @@
+name: Auto Build and Release APK
+
+on:
+  push:
+    tags:
+      - '20*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: コードの取得（リポジトリのクローン）
+        uses: actions/checkout@v4
+
+      - name: Javaのセットアップ
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: APKの全自動錬成（ビルド）
+        run: bash ./gradlew assembleDebug
+
+      - name: GitHub Releasesへの自動アップロード
+        uses: softprops/action-gh-release@v1
+        with:
+          files: app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

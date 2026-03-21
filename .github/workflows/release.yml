@@ -24,8 +24,8 @@ jobs:
         with:
           gradle-version: '9.0.0'
 
-      - name: APKの全自動錬成（ビルド）
-        run: bash ./gradlew assembleDebug
+      - name: APKの全自動錬成（gradlewを使わずビルド）
+        run: gradle assembleDebug
 
       - name: GitHub Releasesへの自動アップロード
         uses: softprops/action-gh-release@v1

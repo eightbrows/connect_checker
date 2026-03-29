@@ -24,19 +24,28 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: APKの全自動錬成（gradlewを使わずビルド）
-        run: gradle assembleDebug
+      - name: 身分証の復元
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: echo "$SIGNING_KEY" | base64 -d > app/keystore.jks
+
+      - name: APKの全自動錬成（本番Release用！）
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: gradle assembleRelease
 
       - name: 自動リネームとコピー
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/connect_checker-${{ github.ref_name }}.apk
-          cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/connect_checker-latest.apk
+          cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/connect_checker-${{ github.ref_name }}.apk
+          cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/connect_checker-latest.apk
 
       - name: GitHub Releasesへの自動アップロード
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            app/build/outputs/apk/debug/connect_checker-${{ github.ref_name }}.apk
-            app/build/outputs/apk/debug/connect_checker-latest.apk
+            app/build/outputs/apk/release/connect_checker-${{ github.ref_name }}.apk
+            app/build/outputs/apk/release/connect_checker-latest.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

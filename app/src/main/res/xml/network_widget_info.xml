@@ -4,7 +4,7 @@
     android:minHeight="20dp"
     android:targetCellWidth="2"
     android:targetCellHeight="1"
-    android:updatePeriodMillis="0"
+    android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_network"
     android:resizeMode="horizontal"
     android:widgetCategory="home_screen" />

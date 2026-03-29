@@ -69,6 +69,18 @@ fun InstructionScreen() {
     var startDayInput by remember { mutableIntStateOf(prefs.getInt("start_day", 1)) }
     var expanded by remember { mutableStateOf(false) }
 
+    // データ使用量を保持する変数
+    var mobileDataUsage by remember { mutableStateOf("---") }
+
+    // 画面が開いた時や、起算日が変わった時に自動計算する
+    LaunchedEffect(hasUsagePermission, startDayInput) {
+        if (hasUsagePermission) {
+            mobileDataUsage = getMobileDataUsageForActivity(context, startDayInput)
+        } else {
+            mobileDataUsage = context.getString(R.string.no_permission)
+        }
+    }
+
     // Android 13以上の場合、初回起動時に通知権限をリクエストする
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
@@ -170,37 +182,66 @@ fun InstructionScreen() {
                     Text(stringResource(R.string.main_start_day_desc), color = Color.DarkGray, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = it }
+                    // ここからが「真っ二つUI（Row）」
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp), // 左右のスキマ
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedTextField(
-                            value = stringResource(R.string.main_day_format, startDayInput),
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text(stringResource(R.string.main_label_start_day)) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            (1..31).forEach { day ->
-                                DropdownMenuItem(
-                                    text = { Text(stringResource(R.string.main_day_format, day)) },
-                                    onClick = {
-                                        startDayInput = day
-                                        expanded = false
-                                        prefs.edit { putInt("start_day", day) }
-                                        val intent = Intent(context, NetworkWidget::class.java).apply {
-                                            action = "ACTION_CHECK_NETWORK"
-                                        }
-                                        context.sendBroadcast(intent)
-                                    }
+                        // 【左半分】重さ(weight) 1f で起算日ドロップダウン
+                        Box(modifier = Modifier.weight(1f)) {
+                            ExposedDropdownMenuBox(
+                                expanded = expanded,
+                                onExpandedChange = { expanded = it }
+                            ) {
+                                OutlinedTextField(
+                                    value = stringResource(R.string.main_day_format, startDayInput),
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text(stringResource(R.string.main_label_start_day)) },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                                    modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                                 )
+                                ExposedDropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    (1..31).forEach { day ->
+                                        DropdownMenuItem(
+                                            text = { Text(stringResource(R.string.main_day_format, day)) },
+                                            onClick = {
+                                                startDayInput = day
+                                                expanded = false
+                                                prefs.edit { putInt("start_day", day) }
+                                                val intent = Intent(context, NetworkWidget::class.java).apply {
+                                                    action = "ACTION_CHECK_NETWORK"
+                                                }
+                                                context.sendBroadcast(intent)
+                                            }
+                                        )
+                                    }
+                                }
                             }
+                        }
+
+                        // 【右半分】重さ(weight) 1f で通信量を表示
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.main_current_usage),
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = mobileDataUsage,
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4CAF50) // 緑色
+                            )
                         }
                     }
                 }
@@ -263,4 +304,51 @@ fun checkNotificationPermission(context: Context): Boolean {
         // Android 12以下の場合はデフォルトで許可済みとする
         true
     }
+}
+
+// Activity用の通信量取得
+fun getMobileDataUsageForActivity(context: Context, startDay: Int): String {
+    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+    val mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
+    if (mode != AppOpsManager.MODE_ALLOWED) {
+        return context.getString(R.string.no_permission)
+    }
+
+    val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as android.app.usage.NetworkStatsManager
+    val now = java.util.Calendar.getInstance()
+    val endTime = now.timeInMillis
+
+    val startCal = java.util.Calendar.getInstance()
+    startCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+    startCal.set(java.util.Calendar.MINUTE, 0)
+    startCal.set(java.util.Calendar.SECOND, 0)
+    startCal.set(java.util.Calendar.MILLISECOND, 0)
+
+    if (now.get(java.util.Calendar.DAY_OF_MONTH) < startDay) {
+        startCal.add(java.util.Calendar.MONTH, -1)
+    }
+    startCal.set(java.util.Calendar.DAY_OF_MONTH, startDay)
+    val startTime = startCal.timeInMillis
+
+    return try {
+        val bucket = networkStatsManager.querySummaryForDevice(
+            android.net.ConnectivityManager.TYPE_MOBILE,
+            null,
+            startTime,
+            endTime
+        )
+        val bytes = bucket.rxBytes + bucket.txBytes
+        formatDataSizeForActivity(bytes)
+    } catch (_: Exception) {
+        "---"
+    }
+}
+
+fun formatDataSizeForActivity(bytes: Long): String {
+    val gb = bytes / (1024.0 * 1024.0 * 1024.0)
+    if (gb >= 1.0) {
+        return String.format(java.util.Locale.US,"%.2f GB", gb)
+    }
+    val mb = bytes / (1024.0 * 1024.0)
+    return String.format(java.util.Locale.US,"%.0f MB", mb)
 }

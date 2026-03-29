@@ -25,4 +25,5 @@
     <string name="main_title_widget">③ ホーム画面にウィジェット配置</string>
     <string name="main_widget_desc">下のボタンでアプリを閉じた後、ホーム画面の何もない場所を「長押し」して、ウィジェットを追加して下さい。</string>
     <string name="main_btn_close">アプリを閉じる</string>
+    <string name="main_current_usage">現在の使用量</string>
 </resources>

@@ -25,4 +25,5 @@
     <string name="main_title_widget">3. Place Widget on Home Screen</string>
     <string name="main_widget_desc">Close the app, then long-press an empty area on your home screen to add the widget.</string>
     <string name="main_btn_close">Close App</string>
+    <string name="main_current_usage">Current Usage</string>
 </resources>

@@ -365,23 +365,6 @@ fun InstructionScreen() {
                     }
                     .padding(8.dp)
             )
-
-            // 結果メッセージとダウンロードページへのリンク
-            updateMessage?.let { msg ->
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = msg,
-                    color = Color.DarkGray,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable {
-                        updateUrl?.let { url ->
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                            context.startActivity(intent)
-                        }
-                    }
-                )
-            }
         }
     }
 }

@@ -35,6 +35,12 @@ import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import android.net.Uri
+import androidx.compose.ui.text.style.TextDecoration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.compose.foundation.clickable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,6 +74,11 @@ fun InstructionScreen() {
     val prefs = context.getSharedPreferences("NetworkCheckerPrefs", Context.MODE_PRIVATE)
     var startDayInput by remember { mutableIntStateOf(prefs.getInt("start_day", 1)) }
     var expanded by remember { mutableStateOf(false) }
+
+    val coroutineScope = rememberCoroutineScope()
+    var isCheckingUpdate by remember { mutableStateOf(false) }
+    var updateMessage by remember { mutableStateOf<String?>(null) }
+    var updateUrl by remember { mutableStateOf<String?>(null) }
 
     // データ使用量を保持する変数
     var mobileDataUsage by remember { mutableStateOf("---") }
@@ -285,6 +296,90 @@ fun InstructionScreen() {
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 最新版を確認するテキストリンク
+            Text(
+                text = "最新版を確認する",
+                color = Color.Blue,
+                fontSize = 14.sp,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier
+                    .clickable {
+                        if (!isCheckingUpdate) {
+                            isCheckingUpdate = true
+                            updateMessage = "更新を確認中..."
+
+                            coroutineScope.launch(Dispatchers.IO) {
+                                try {
+                                    // 1. GitHubのReleases APIへアクセスするURL
+                                    val url = java.net.URL("https://api.github.com/repos/eightbrows/connect_checker/releases/latest")
+                                    val connection = url.openConnection() as java.net.HttpURLConnection
+                                    connection.requestMethod = "GET"
+                                    connection.connectTimeout = 5000 // 5秒でタイムアウト
+                                    connection.readTimeout = 5000
+
+                                    // 通信成功（HTTP 200 OK）の場合
+                                    if (connection.responseCode == java.net.HttpURLConnection.HTTP_OK) {
+                                        val response = connection.inputStream.bufferedReader().use { it.readText() }
+                                        val json = org.json.JSONObject(response)
+
+                                        // GitHubから最新のバージョン名（tag_name）とページのURLを取得
+                                        val latestVersion = json.getString("tag_name").replace("v", "") // "v1.0.0" などの "v" を除去
+                                        val releaseUrl = json.getString("html_url")
+
+                                        // 自分のアプリの現在のバージョン名を取得（nullの場合は空文字として扱う安全対策を追加）
+                                        val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName?.replace("v", "") ?: ""
+
+                                        // 2. 通信が終わったら、メインスレッドに戻ってUIを更新する
+                                        withContext(Dispatchers.Main) {
+                                            // バージョンが一致しない場合を「更新あり」と判定する簡易ロジック
+                                            if (latestVersion != currentVersion) {
+                                                updateMessage = "新しいバージョン ($latestVersion) があります"
+                                                updateUrl = releaseUrl
+                                            } else {
+                                                updateMessage = "最新バージョンです"
+                                                updateUrl = null
+                                            }
+                                            // 確認中状態を解除
+                                            isCheckingUpdate = false
+                                        }
+                                    } else {
+                                        // 通信はできたがエラーが返ってきた場合（API制限など）
+                                        withContext(Dispatchers.Main) {
+                                            updateMessage = "確認できませんでした"
+                                            isCheckingUpdate = false
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    // 圏外などで通信自体が失敗した場合
+                                    withContext(Dispatchers.Main) {
+                                        updateMessage = "通信エラーが発生しました"
+                                        isCheckingUpdate = false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(8.dp)
+            )
+
+            // 結果メッセージとダウンロードページへのリンク
+            updateMessage?.let { msg ->
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = msg,
+                    color = Color.DarkGray,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable {
+                        updateUrl?.let { url ->
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            context.startActivity(intent)
+                        }
+                    }
+                )
+            }
         }
     }
 }

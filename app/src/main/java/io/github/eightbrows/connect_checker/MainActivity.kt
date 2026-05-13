@@ -298,63 +298,65 @@ fun InstructionScreen() {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 最新版を確認するテキストリンク
+            // 更新確認用のテキストリンク
             Text(
-                text = "最新版を確認する",
+                // nullの場合はstringResourceを使用してデフォルト文字列を取得する
+                text = updateMessage ?: stringResource(R.string.update_check_default),
                 color = Color.Blue,
                 fontSize = 14.sp,
                 textDecoration = TextDecoration.Underline,
                 modifier = Modifier
                     .clickable {
+                        // ダウンロードURLが取得済みの場合はブラウザを起動
+                        if (updateUrl != null) {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
+                            context.startActivity(intent)
+                            return@clickable
+                        }
+
+                        // 通信中でない場合のみ通信を開始
                         if (!isCheckingUpdate) {
                             isCheckingUpdate = true
-                            updateMessage = "更新を確認中..."
+                            // Contextを使用してリソースから文字列を取得する
+                            updateMessage = context.getString(R.string.update_checking)
 
                             coroutineScope.launch(Dispatchers.IO) {
                                 try {
-                                    // 1. GitHubのReleases APIへアクセスするURL
                                     val url = java.net.URL("https://api.github.com/repos/eightbrows/connect_checker/releases/latest")
                                     val connection = url.openConnection() as java.net.HttpURLConnection
                                     connection.requestMethod = "GET"
-                                    connection.connectTimeout = 5000 // 5秒でタイムアウト
+                                    connection.connectTimeout = 5000
                                     connection.readTimeout = 5000
 
-                                    // 通信成功（HTTP 200 OK）の場合
                                     if (connection.responseCode == java.net.HttpURLConnection.HTTP_OK) {
                                         val response = connection.inputStream.bufferedReader().use { it.readText() }
                                         val json = org.json.JSONObject(response)
 
-                                        // GitHubから最新のバージョン名（tag_name）とページのURLを取得
-                                        val latestVersion = json.getString("tag_name").replace("v", "") // "v1.0.0" などの "v" を除去
+                                        val latestVersion = json.getString("tag_name").replace("v", "")
                                         val releaseUrl = json.getString("html_url")
 
-                                        // 自分のアプリの現在のバージョン名を取得（nullの場合は空文字として扱う安全対策を追加）
                                         val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName?.replace("v", "") ?: ""
 
-                                        // 2. 通信が終わったら、メインスレッドに戻ってUIを更新する
                                         withContext(Dispatchers.Main) {
-                                            // バージョンが一致しない場合を「更新あり」と判定する簡易ロジック
                                             if (latestVersion != currentVersion) {
-                                                updateMessage = "新しいバージョン ($latestVersion) があります"
+                                                // プレースホルダー（%1$s）にlatestVersionを挿入して文字列を取得する
+                                                updateMessage = context.getString(R.string.update_available, latestVersion)
                                                 updateUrl = releaseUrl
                                             } else {
-                                                updateMessage = "最新バージョンです"
+                                                updateMessage = context.getString(R.string.update_latest)
                                                 updateUrl = null
                                             }
-                                            // 確認中状態を解除
                                             isCheckingUpdate = false
                                         }
                                     } else {
-                                        // 通信はできたがエラーが返ってきた場合（API制限など）
                                         withContext(Dispatchers.Main) {
-                                            updateMessage = "確認できませんでした"
+                                            updateMessage = context.getString(R.string.update_not_found)
                                             isCheckingUpdate = false
                                         }
                                     }
                                 } catch (e: Exception) {
-                                    // 圏外などで通信自体が失敗した場合
                                     withContext(Dispatchers.Main) {
-                                        updateMessage = "通信エラーが発生しました"
+                                        updateMessage = context.getString(R.string.update_error)
                                         isCheckingUpdate = false
                                     }
                                 }

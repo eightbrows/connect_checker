@@ -26,4 +26,11 @@
     <string name="main_widget_desc">下のボタンでアプリを閉じた後、ホーム画面の何もない場所を「長押し」して、ウィジェットを追加して下さい。</string>
     <string name="main_btn_close">アプリを閉じる</string>
     <string name="main_current_usage">現在の使用量</string>
+
+    <string name="update_check_default">最新版を確認する</string>
+    <string name="update_checking">更新を確認中...</string>
+    <string name="update_available">新しいバージョン (%1$s) があります</string>
+    <string name="update_latest">最新バージョンです</string>
+    <string name="update_not_found">確認できませんでした</string>
+    <string name="update_error">通信エラーが発生しました</string>
 </resources>

@@ -341,7 +341,9 @@ fun InstructionScreen() {
                                             if (latestVersion != currentVersion) {
                                                 // プレースホルダー（%1$s）にlatestVersionを挿入して文字列を取得する
                                                 updateMessage = context.getString(R.string.update_available, latestVersion)
-                                                updateUrl = releaseUrl
+
+                                                // アプリ紹介ページ（GitHub Pages）のURLを指定する
+                                                updateUrl = "https://eightbrows.github.io/"
                                             } else {
                                                 updateMessage = context.getString(R.string.update_latest)
                                                 updateUrl = null

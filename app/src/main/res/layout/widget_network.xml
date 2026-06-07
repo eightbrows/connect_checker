@@ -9,9 +9,8 @@
 
     <LinearLayout
         android:id="@+id/widget_click_area"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
         android:orientation="vertical"
         android:gravity="center"
         android:background="?android:attr/selectableItemBackground"
@@ -23,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:text="判定中"
+            android:text="@string/widget_checking"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
             android:gravity="center"
@@ -39,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:text="---"
+            android:text="@string/no_data"
             android:textColor="#FFEB3B"
             android:textStyle="bold"
             android:gravity="top|center_horizontal"
@@ -49,45 +48,6 @@
             android:autoSizeMinTextSize="14sp"
             android:autoSizeMaxTextSize="30sp"
             android:autoSizeStepGranularity="1sp" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="48dp"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <FrameLayout
-            android:id="@+id/setting_button_area"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_settings"
-                android:contentDescription="設定" />
-        </FrameLayout>
-
-        <FrameLayout
-            android:id="@+id/refresh_button_area"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true">
-            <ImageView
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_refresh"
-                android:contentDescription="更新" />
-        </FrameLayout>
 
     </LinearLayout>
 

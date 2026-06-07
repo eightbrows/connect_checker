@@ -1,8 +1,6 @@
 package io.github.eightbrows.connect_checker
 
-import android.app.AppOpsManager
 import android.app.PendingIntent
-import android.app.usage.NetworkStatsManager
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
@@ -11,19 +9,22 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
-import android.os.Process
 import android.provider.Settings
-import android.widget.RemoteViews
-import android.widget.Toast
-import java.util.Calendar
-import androidx.core.graphics.toColorInt
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
+import android.widget.RemoteViews
+import android.widget.Toast
+import androidx.core.graphics.toColorInt
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class NetworkWidget : AppWidgetProvider() {
+
+    companion object {
+        // 「更新中」表示をユーザーが認識できるようにするための待機時間
+        private const val LOADING_DISPLAY_MS = 800L
+    }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
@@ -41,51 +42,29 @@ class NetworkWidget : AppWidgetProvider() {
             val thisWidget = ComponentName(context, NetworkWidget::class.java)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
 
-            // --------------------------------------------------------
-            // 処理開始時のUI状態更新
-            // --------------------------------------------------------
+            // 「更新中」表示を即座に反映
             val loadingViews = RemoteViews(context.packageName, R.layout.widget_network)
-
-            // ★ バイリンガル対応：辞書から「更新中...」を呼び出す
             loadingViews.setTextViewText(R.id.widget_text, context.getString(R.string.widget_updating))
             loadingViews.setTextViewText(R.id.widget_usage_text, "🌀")
-
-            // 背景色を更新中を示すオレンジ色に変更
             loadingViews.setInt(R.id.widget_bg, "setBackgroundColor", "#FF9800".toColorInt())
-
-            // 更新中のUIをウィジェットに反映
             appWidgetManager.updateAppWidget(thisWidget, loadingViews)
 
-            // --------------------------------------------------------
-            // 非同期でネットワーク状態を取得し、ウィジェットを再描画
-            // --------------------------------------------------------
-            Thread {
-                // UIの切り替えを視認しやすくするため1秒待機
-                Thread.sleep(1000)
+            // onReceive がリターンした後もプロセスを生かしておくための宣言
+            val pendingResult = goAsync()
 
-                for (appWidgetId in appWidgetIds) {
-                    // 手動更新のため false を指定して実際のデータで更新
-                    updateWidget(context, appWidgetManager, appWidgetId, false)
+            Thread {
+                try {
+                    // 「更新中」表示を見せるための短い待機（不要なら削ってよい）
+                    Thread.sleep(LOADING_DISPLAY_MS)
+                    for (appWidgetId in appWidgetIds) {
+                        // 手動更新のため false を指定して実際のデータで更新
+                        updateWidget(context, appWidgetManager, appWidgetId, false)
+                    }
+                } finally {
+                    // 処理完了をシステムに通知（必ず1回だけ呼ぶ）
+                    pendingResult.finish()
                 }
             }.start()
-        }
-
-        // ② 設定ボタン押下時の処理（トースト表示およびWi-Fi設定画面への遷移）
-        if (intent.action == "ACTION_OPEN_WIFI_SETTINGS") {
-
-            // トーストメッセージの文字サイズを調整（視認性向上のため1.2倍）
-            // ★ バイリンガル対応：辞書からトーストの文章を呼び出す
-            val messageText = context.getString(R.string.toast_switch_network)
-            val message = SpannableString(messageText)
-            message.setSpan(RelativeSizeSpan(1.2f), 0, message.length, 0)
-
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-
-            // Wi-Fi設定画面を起動
-            val wifiIntent = Intent(Settings.ACTION_WIFI_SETTINGS).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
-            }
-            context.startActivity(wifiIntent)
         }
     }
 
@@ -98,7 +77,7 @@ class NetworkWidget : AppWidgetProvider() {
 
         // ★ バイリンガル対応：初期値も辞書から呼び出す
         var statusText = context.getString(R.string.widget_out_of_service)
-        var subText = "---"
+        var subText = context.getString(R.string.no_data)
         var bgColor = "#9E9E9E".toColorInt() // 灰色
 
         if (capabilities != null) {
@@ -109,7 +88,7 @@ class NetworkWidget : AppWidgetProvider() {
             } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
                 statusText = context.getString(R.string.widget_mobile)
                 bgColor = "#F44336".toColorInt() // 赤色
-                subText = getMobileDataUsage(context)
+                subText = DataUsage.getMobileDataUsageText(context)
             }
         }
 
@@ -137,25 +116,14 @@ class NetworkWidget : AppWidgetProvider() {
         // クリックイベント（PendingIntent）の設定
         // --------------------------------------------------------
 
-        // 更新処理のインテント設定（更新ボタン・ウィジェット全体用）
+        // ウィジェット全体タップで更新
         val updateIntent = Intent(context, NetworkWidget::class.java).apply {
             action = "ACTION_CHECK_NETWORK"
         }
         val updatePendingIntent = PendingIntent.getBroadcast(
             context, 0, updateIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        views.setOnClickPendingIntent(R.id.refresh_button_area, updatePendingIntent)
         views.setOnClickPendingIntent(R.id.widget_click_area, updatePendingIntent)
-
-        // 設定画面起動のインテント設定（設定ボタン用）
-        val settingIntent = Intent(context, NetworkWidget::class.java).apply {
-            action = "ACTION_OPEN_WIFI_SETTINGS"
-        }
-        // 更新用PendingIntentとの重複を避けるため、requestCodeに 1 を指定
-        val settingPendingIntent = PendingIntent.getBroadcast(
-            context, 1, settingIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        views.setOnClickPendingIntent(R.id.setting_button_area, settingPendingIntent)
 
         // --------------------------------------------------------
 
@@ -164,7 +132,8 @@ class NetworkWidget : AppWidgetProvider() {
 
     // Wi-Fiの電波強度を取得
     private fun getWifiSignalLevel(context: Context): String {
-        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiManager =
+            context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
         val info = wifiManager.connectionInfo
         val level = WifiManager.calculateSignalLevel(info.rssi, 5)
 
@@ -175,57 +144,5 @@ class NetworkWidget : AppWidgetProvider() {
             1 -> context.getString(R.string.signal_weak)
             else -> context.getString(R.string.signal_none)
         }
-    }
-
-    // モバイルデータの使用量を取得
-    private fun getMobileDataUsage(context: Context): String {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
-        if (mode != AppOpsManager.MODE_ALLOWED) {
-            // ★ バイリンガル対応：権限がない場合も辞書から呼び出す
-            return context.getString(R.string.no_permission)
-        }
-
-        val prefs = context.getSharedPreferences("NetworkCheckerPrefs", Context.MODE_PRIVATE)
-        val startDay = prefs.getInt("start_day", 1)
-
-        val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
-        val now = Calendar.getInstance()
-        val endTime = now.timeInMillis
-
-        val startCal = Calendar.getInstance()
-        startCal.set(Calendar.HOUR_OF_DAY, 0)
-        startCal.set(Calendar.MINUTE, 0)
-        startCal.set(Calendar.SECOND, 0)
-        startCal.set(Calendar.MILLISECOND, 0)
-
-        if (now.get(Calendar.DAY_OF_MONTH) < startDay) {
-            startCal.add(Calendar.MONTH, -1)
-        }
-        startCal.set(Calendar.DAY_OF_MONTH, startDay)
-        val startTime = startCal.timeInMillis
-
-        return try {
-            val bucket = networkStatsManager.querySummaryForDevice(
-                ConnectivityManager.TYPE_MOBILE,
-                null,
-                startTime,
-                endTime
-            )
-            val bytes = bucket.rxBytes + bucket.txBytes
-            formatDataSize(bytes)
-        } catch (_: Exception) {
-            "---"
-        }
-    }
-
-    // バイト数をGBまたはMBにフォーマット
-    private fun formatDataSize(bytes: Long): String {
-        val gb = bytes / (1024.0 * 1024.0 * 1024.0)
-        if (gb >= 1.0) {
-            return String.format(Locale.US,"%.2f GB", gb)
-        }
-        val mb = bytes / (1024.0 * 1024.0)
-        return String.format(Locale.US,"%.0f MB", mb)
     }
 }

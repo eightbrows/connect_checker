@@ -1,46 +1,65 @@
 package io.github.eightbrows.connect_checker
 
-import android.Manifest
 import android.app.Activity
-import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
+import android.net.Uri
 import android.os.Bundle
-import android.os.Process
 import android.provider.Settings
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import android.net.Uri
-import androidx.compose.ui.text.style.TextDecoration
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import androidx.compose.foundation.clickable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,40 +81,21 @@ fun InstructionScreen() {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // 必要な権限の許可状態を保持
-    var hasUsagePermission by remember { mutableStateOf(checkUsagePermission(context)) }
-    var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
-
-    // 通知権限リクエスト用ランチャー
-    val notificationLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted -> hasNotificationPermission = isGranted }
-    )
+    var hasUsagePermission by remember { mutableStateOf(DataUsage.hasUsageAccess(context)) }
 
     val prefs = context.getSharedPreferences("NetworkCheckerPrefs", Context.MODE_PRIVATE)
     var startDayInput by remember { mutableIntStateOf(prefs.getInt("start_day", 1)) }
     var expanded by remember { mutableStateOf(false) }
 
-    val coroutineScope = rememberCoroutineScope()
-    var isCheckingUpdate by remember { mutableStateOf(false) }
-    var updateMessage by remember { mutableStateOf<String?>(null) }
-    var updateUrl by remember { mutableStateOf<String?>(null) }
-
     // データ使用量を保持する変数
-    var mobileDataUsage by remember { mutableStateOf("---") }
+    var mobileDataUsage by remember { mutableStateOf(context.getString(R.string.no_data)) }
 
     // 画面が開いた時や、起算日が変わった時に自動計算する
     LaunchedEffect(hasUsagePermission, startDayInput) {
         if (hasUsagePermission) {
-            mobileDataUsage = getMobileDataUsageForActivity(context, startDayInput)
+            mobileDataUsage = DataUsage.getMobileDataUsageText(context, startDayInput)
         } else {
             mobileDataUsage = context.getString(R.string.no_permission)
-        }
-    }
-
-    // Android 13以上の場合、初回起動時に通知権限をリクエストする
-    LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasNotificationPermission) {
-            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
@@ -103,8 +103,7 @@ fun InstructionScreen() {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                hasUsagePermission = checkUsagePermission(context)
-                hasNotificationPermission = checkNotificationPermission(context)
+                hasUsagePermission = DataUsage.hasUsageAccess(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -151,33 +150,13 @@ fun InstructionScreen() {
                             onClick = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
                         ) {
-                            Icon(Icons.Default.Settings, contentDescription = null)
+                            Icon(painter = painterResource(R.drawable.ic_settings), contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.main_btn_usage))
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    // 通知権限（Android 13以降）
-                    if (hasNotificationPermission) {
-                        Text(stringResource(R.string.main_notif_granted), color = Color(0xFF4CAF50), fontWeight = FontWeight.Bold)
-                    } else {
-                        Text(stringResource(R.string.main_notif_desc), color = Color.DarkGray, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF44336))
-                        ) {
-                            Icon(Icons.Default.Notifications, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.main_btn_notif))
-                        }
-                    }
                 }
             }
 
@@ -298,139 +277,19 @@ fun InstructionScreen() {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 更新確認用のテキストリンク
+// アプリ紹介ページへのリンク
+            val infoUrl = "https://eightbrows.github.io/"
             Text(
-                // nullの場合はstringResourceを使用してデフォルト文字列を取得する
-                text = updateMessage ?: stringResource(R.string.update_check_default),
+                text = stringResource(R.string.open_info_page),
                 color = Color.Blue,
                 fontSize = 14.sp,
                 textDecoration = TextDecoration.Underline,
                 modifier = Modifier
                     .clickable {
-                        // ダウンロードURLが取得済みの場合はブラウザを起動
-                        if (updateUrl != null) {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl))
-                            context.startActivity(intent)
-                            return@clickable
-                        }
-
-                        // 通信中でない場合のみ通信を開始
-                        if (!isCheckingUpdate) {
-                            isCheckingUpdate = true
-                            // Contextを使用してリソースから文字列を取得する
-                            updateMessage = context.getString(R.string.update_checking)
-
-                            coroutineScope.launch(Dispatchers.IO) {
-                                try {
-                                    val url = java.net.URL("https://api.github.com/repos/eightbrows/connect_checker/releases/latest")
-                                    val connection = url.openConnection() as java.net.HttpURLConnection
-                                    connection.requestMethod = "GET"
-                                    connection.connectTimeout = 5000
-                                    connection.readTimeout = 5000
-
-                                    if (connection.responseCode == java.net.HttpURLConnection.HTTP_OK) {
-                                        val response = connection.inputStream.bufferedReader().use { it.readText() }
-                                        val json = org.json.JSONObject(response)
-
-                                        val latestVersion = json.getString("tag_name").replace("v", "")
-                                        val releaseUrl = json.getString("html_url")
-
-                                        val currentVersion = context.packageManager.getPackageInfo(context.packageName, 0).versionName?.replace("v", "") ?: ""
-
-                                        withContext(Dispatchers.Main) {
-                                            if (latestVersion != currentVersion) {
-                                                // プレースホルダー（%1$s）にlatestVersionを挿入して文字列を取得する
-                                                updateMessage = context.getString(R.string.update_available, latestVersion)
-
-                                                // アプリ紹介ページ（GitHub Pages）のURLを指定する
-                                                updateUrl = "https://eightbrows.github.io/"
-                                            } else {
-                                                updateMessage = context.getString(R.string.update_latest)
-                                                updateUrl = null
-                                            }
-                                            isCheckingUpdate = false
-                                        }
-                                    } else {
-                                        withContext(Dispatchers.Main) {
-                                            updateMessage = context.getString(R.string.update_not_found)
-                                            isCheckingUpdate = false
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    withContext(Dispatchers.Main) {
-                                        updateMessage = context.getString(R.string.update_error)
-                                        isCheckingUpdate = false
-                                    }
-                                }
-                            }
-                        }
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(infoUrl)))
                     }
                     .padding(8.dp)
             )
         }
     }
-}
-
-// 使用状況へのアクセス権限チェック
-fun checkUsagePermission(context: Context): Boolean {
-    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-    val mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
-    return mode == AppOpsManager.MODE_ALLOWED
-}
-
-// 通知権限のチェック（Android 13以降対応）
-fun checkNotificationPermission(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-    } else {
-        // Android 12以下の場合はデフォルトで許可済みとする
-        true
-    }
-}
-
-// Activity用の通信量取得
-fun getMobileDataUsageForActivity(context: Context, startDay: Int): String {
-    val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-    val mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
-    if (mode != AppOpsManager.MODE_ALLOWED) {
-        return context.getString(R.string.no_permission)
-    }
-
-    val networkStatsManager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as android.app.usage.NetworkStatsManager
-    val now = java.util.Calendar.getInstance()
-    val endTime = now.timeInMillis
-
-    val startCal = java.util.Calendar.getInstance()
-    startCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-    startCal.set(java.util.Calendar.MINUTE, 0)
-    startCal.set(java.util.Calendar.SECOND, 0)
-    startCal.set(java.util.Calendar.MILLISECOND, 0)
-
-    if (now.get(java.util.Calendar.DAY_OF_MONTH) < startDay) {
-        startCal.add(java.util.Calendar.MONTH, -1)
-    }
-    startCal.set(java.util.Calendar.DAY_OF_MONTH, startDay)
-    val startTime = startCal.timeInMillis
-
-    return try {
-        val bucket = networkStatsManager.querySummaryForDevice(
-            android.net.ConnectivityManager.TYPE_MOBILE,
-            null,
-            startTime,
-            endTime
-        )
-        val bytes = bucket.rxBytes + bucket.txBytes
-        formatDataSizeForActivity(bytes)
-    } catch (_: Exception) {
-        "---"
-    }
-}
-
-fun formatDataSizeForActivity(bytes: Long): String {
-    val gb = bytes / (1024.0 * 1024.0 * 1024.0)
-    if (gb >= 1.0) {
-        return String.format(java.util.Locale.US,"%.2f GB", gb)
-    }
-    val mb = bytes / (1024.0 * 1024.0)
-    return String.format(java.util.Locale.US,"%.0f MB", mb)
 }

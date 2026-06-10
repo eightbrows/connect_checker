@@ -1,14 +1,11 @@
 name: Auto Build and Release APK
-
 on:
   push:
     tags:
-      - '20*'
-
+      - '20*'          # 20260610-R01 / 20260610-D01 の両方でビルドが走る
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: コードの取得（リポジトリのクローン）
         uses: actions/checkout@v4
@@ -19,29 +16,31 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Gradle（9.3.1）の指定
+      - name: Gradleのセットアップ（キャッシュ等）
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '9.3.1'
+        # gradle-version は指定しない（gradle-wrapper.properties の版を使う）
+        # gradle-version: '9.4.1'
 
       - name: 身分証の復元
         env:
           SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
         run: echo "$SIGNING_KEY" | base64 -d > app/keystore.jks
 
-      - name: APKの全自動錬成（本番Release用！）
+      - name: APKの全自動錬成（ビルド：R/D 共通）
         env:
           KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle assembleRelease
+        run: chmod +x ./gradlew && ./gradlew assembleRelease
 
-      - name: 自動リネームとコピー
+      - name: 自動リネームとコピー（R タグのみ）
+        if: contains(github.ref_name, '-R')
         run: |
           cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/connect_checker-${{ github.ref_name }}.apk
           cp app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/connect_checker-latest.apk
 
-      - name: GitHub Releasesへの自動アップロード
+      - name: GitHub Releasesへの自動アップロード（R タグのみ）
+        if: contains(github.ref_name, '-R')
         uses: softprops/action-gh-release@v1
         with:
           files: |

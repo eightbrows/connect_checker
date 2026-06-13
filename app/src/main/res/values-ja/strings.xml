@@ -24,5 +24,6 @@
     <string name="widget_description">現在の接続回線とモバイルデータ使用量を表示します。</string>
     <string name="open_info_page">公式ページを開く</string>
 
-    <string name="usage_label">▼モバイル使用量</string>
+    <string name="usage_label">▼モバイル使用</string>
+    <string name="no_sim">SIMなし</string>
 </resources>

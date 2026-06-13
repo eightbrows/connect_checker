@@ -25,4 +25,5 @@
     <string name="open_info_page">Open official page</string>
 
     <string name="usage_label">▼Mobile Usage</string>
+    <string name="no_sim">No SIM</string>
 </resources>

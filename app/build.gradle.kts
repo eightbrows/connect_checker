@@ -15,8 +15,8 @@ android {
         applicationId = "io.github.eightbrows.connect_checker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "20260613-R03"
+        versionCode = 17
+        versionName = "20260613-D04"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

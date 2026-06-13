@@ -13,6 +13,8 @@ import android.text.style.RelativeSizeSpan
 import android.widget.RemoteViews
 import androidx.core.graphics.toColorInt
 import android.provider.Settings
+import android.telephony.TelephonyManager
+import android.content.pm.PackageManager
 
 class NetworkWidget : AppWidgetProvider() {
 
@@ -55,20 +57,21 @@ class NetworkWidget : AppWidgetProvider() {
 
             Thread {
                 try {
-                    // 「更新中」表示を見せるための短い待機
+                    // ★ 先に「更新中」を見せるための待機（必ず更新の前）
                     Thread.sleep(LOADING_DISPLAY_MS)
+                    // ★ 待機のあとで本来の表示に更新
                     for (appWidgetId in appWidgetIds) {
-                        updateWidget(context, appWidgetManager, appWidgetId)
+                        updateWidget(context, appWidgetManager, appWidgetId, isManual = true)
                     }
                 } finally {
-                    // 処理完了をシステムに通知（必ず1回だけ呼ぶ）
+                    // 処理完了をシステムに通知（必ず1回だけ）
                     pendingResult.finish()
                 }
             }.start()
         }
     }
 
-    private fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int) {
+    private fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, isManual: Boolean = false) {
         val views = RemoteViews(context.packageName, R.layout.widget_network)
 
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -97,9 +100,13 @@ class NetworkWidget : AppWidgetProvider() {
         }
 
         // --------------------------------------------------------
-        // 下段の表示（回線種別によらずモバイル使用量を表示）
+        // 下段の表示（回線種別によらずモバイル使用量を表示）、WiFi端末はSIM無し表示
         // --------------------------------------------------------
-        val usage = DataUsage.getMobileDataUsageText(context)
+        val usage = if (deviceHasSim(context)) {
+            DataUsage.getMobileDataUsageText(context)
+        } else {
+            context.getString(R.string.no_sim)
+        }
 
         // 数値部分（先頭の数字と小数点）だけ1.5倍にする（GB の後ろの接尾辞は無し）
         val numLen = usage.indexOfFirst { !it.isDigit() && it != '.' }
@@ -109,12 +116,17 @@ class NetworkWidget : AppWidgetProvider() {
             styled.setSpan(RelativeSizeSpan(1.5f), 0, numLen, 0)
         }
 
-        // 更新サインの動物（更新のたびに変化）
-        val animals = listOf("🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐑", "🐵", "🐔", "🐶", "🐗", "🐱", "🦭", "🐻")
-        val trapMark = " " + animals.random()
+        // 手動更新は動物（更新のたびに変化）、自動更新は時計（⌚）で区別する
+        val label = context.getString(R.string.usage_label)
+        val labelText = if (isManual) {
+            val animals = listOf("🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐑", "🐵", "🐔", "🐶", "🐗", "🐱", "🦭", "🐻")
+            label + " " + animals.random()
+        } else {
+            "$label ⌚"
+        }
 
         views.setTextViewText(R.id.widget_text, statusText)
-        views.setTextViewText(R.id.widget_usage_label, context.getString(R.string.usage_label) + trapMark)
+        views.setTextViewText(R.id.widget_usage_label, labelText)
         views.setTextViewText(R.id.widget_usage_text, styled)
         views.setInt(R.id.widget_bg, "setBackgroundColor", bgColor)
 
@@ -128,5 +140,24 @@ class NetworkWidget : AppWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_click_area, updatePendingIntent)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    /** モバイル回線（SIM）が1つでも入っているか。権限不要。 */
+    private fun deviceHasSim(context: Context): Boolean {
+        // 電話機能の無い端末（Wi-Fi専用タブレット等）はモバイル回線なし
+        if (!context.packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return false
+        }
+        val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+            ?: return false
+        @Suppress("DEPRECATION")
+        val slotCount = tm.phoneCount // デュアルSIMなら 2
+        for (i in 0 until slotCount) {
+            // ABSENT 以外（READY、判定中の UNKNOWN を含む）は「入っている」とみなす
+            if (tm.getSimState(i) != TelephonyManager.SIM_STATE_ABSENT) {
+                return true
+            }
+        }
+        return false
     }
 }

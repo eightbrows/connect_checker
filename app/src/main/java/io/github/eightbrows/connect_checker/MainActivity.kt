@@ -155,8 +155,6 @@ fun InstructionScreen() {
                             Text(stringResource(R.string.main_btn_usage))
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
 
@@ -264,8 +262,9 @@ fun InstructionScreen() {
 
             // パッケージマネージャーからアプリのバージョン名を取得して表示
             val versionName = try {
-                context.packageManager.getPackageInfo(context.packageName, 0).versionName
-            } catch (e: Exception) {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "Unknown"
+            } catch (_: Exception) {
                 "Unknown"
             }
 

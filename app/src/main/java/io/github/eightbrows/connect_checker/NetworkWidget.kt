@@ -22,9 +22,16 @@ class NetworkWidget : AppWidgetProvider() {
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        for (appWidgetId in appWidgetIds) {
-            updateWidget(context, appWidgetManager, appWidgetId)
-        }
+        val pendingResult = goAsync()
+        Thread {
+            try {
+                for (appWidgetId in appWidgetIds) {
+                    updateWidget(context, appWidgetManager, appWidgetId)
+                }
+            } finally {
+                pendingResult.finish()
+            }
+        }.start()
     }
 
     override fun onReceive(context: Context, intent: Intent) {

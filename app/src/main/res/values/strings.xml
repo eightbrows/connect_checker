@@ -4,10 +4,6 @@
     <string name="widget_out_of_service">No Signal</string>
     <string name="widget_wifi">Wi-Fi</string>
     <string name="widget_mobile">Mobile</string>
-    <string name="signal_strong">📶: Strong</string>
-    <string name="signal_medium">📶: Fair</string>
-    <string name="signal_weak">📶: Weak</string>
-    <string name="signal_none">📶: None</string>
     <string name="no_permission">No Permission</string>
 
     <string name="main_title_permission">1. Required Permissions</string>
@@ -27,4 +23,6 @@
     <string name="no_data">---</string>
     <string name="widget_description">Shows your current connection and mobile data usage.</string>
     <string name="open_info_page">Open official page</string>
+
+    <string name="usage_label">▼Mobile Usage</string>
 </resources>

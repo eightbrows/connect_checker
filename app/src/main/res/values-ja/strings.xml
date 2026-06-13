@@ -4,10 +4,6 @@
     <string name="widget_out_of_service">圏外</string>
     <string name="widget_wifi">Wi-Fi</string>
     <string name="widget_mobile">Mobile</string>
-    <string name="signal_strong">電波: 強</string>
-    <string name="signal_medium">電波: 中</string>
-    <string name="signal_weak">電波: 弱</string>
-    <string name="signal_none">電波: ✕</string>
     <string name="no_permission">権限なし</string>
 
     <string name="main_title_permission">① 必要な権限の許可</string>
@@ -27,4 +23,6 @@
     <string name="no_data">---</string>
     <string name="widget_description">現在の接続回線とモバイルデータ使用量を表示します。</string>
     <string name="open_info_page">公式ページを開く</string>
+
+    <string name="usage_label">▼モバイル使用量</string>
 </resources>

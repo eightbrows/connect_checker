@@ -76,13 +76,9 @@ object DataUsage {
         return startCal.timeInMillis
     }
 
-    /** バイト数を GB / MB に整形 */
+    /** バイト数を GB に整形（小数第3位） */
     private fun formatDataSize(bytes: Long): String {
         val gb = bytes / (1024.0 * 1024.0 * 1024.0)
-        if (gb >= 1.0) {
-            return String.format(Locale.US, "%.2f GB", gb)
-        }
-        val mb = bytes / (1024.0 * 1024.0)
-        return String.format(Locale.US, "%.0f MB", mb)
+        return String.format(Locale.US, "%.3f GB", gb)
     }
 }

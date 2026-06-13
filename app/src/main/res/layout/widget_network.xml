@@ -17,6 +17,7 @@
         android:clickable="true"
         android:focusable="true">
 
+        <!-- 上段：回線種別（変更なし） -->
         <TextView
             android:id="@+id/widget_text"
             android:layout_width="match_parent"
@@ -33,6 +34,23 @@
             android:autoSizeMaxTextSize="48sp"
             android:autoSizeStepGranularity="1sp" />
 
+        <!-- 中段：ラベル行（小さめ。行の高さに合わせて自動縮小） -->
+        <TextView
+            android:id="@+id/widget_usage_label"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.5"
+            android:text="@string/usage_label"
+            android:textColor="#FFFFFF"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="6sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp" />
+
+        <!-- 下段：数値行（数値だけ1.5倍はコード側で適用） -->
         <TextView
             android:id="@+id/widget_usage_text"
             android:layout_width="match_parent"
@@ -41,9 +59,9 @@
             android:text="@string/no_data"
             android:textColor="#FFEB3B"
             android:textStyle="bold"
-            android:gravity="top|center_horizontal"
+            android:gravity="center"
             android:includeFontPadding="false"
-            android:maxLines="2"
+            android:maxLines="1"
             android:autoSizeTextType="uniform"
             android:autoSizeMinTextSize="14sp"
             android:autoSizeMaxTextSize="30sp"

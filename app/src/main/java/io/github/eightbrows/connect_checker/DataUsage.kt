@@ -14,6 +14,15 @@ object DataUsage {
     private const val KEY_START_DAY = "start_day"
     private const val DEFAULT_START_DAY = 1
 
+    private const val KEY_BG_ALPHA = "bg_alpha"
+    private const val DEFAULT_BG_ALPHA = 255 // 255 = 不透明
+
+    /** 背景アルファ（0=完全透明 .. 255=不透明）。未設定なら不透明。 */
+    fun getBgAlpha(context: Context): Int {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getInt(KEY_BG_ALPHA, DEFAULT_BG_ALPHA)
+    }
+
     /** 「使用状況へのアクセス」権限が許可されているか */
     fun hasUsageAccess(context: Context): Boolean {
         val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager

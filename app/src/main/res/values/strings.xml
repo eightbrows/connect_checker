@@ -26,4 +26,8 @@
 
     <string name="usage_label">▼Mobile Usage</string>
     <string name="no_sim">No SIM</string>
+
+    <string name="setting_extra_title">Additional settings</string>
+    <string name="setting_extra_desc">Optional — adjust to your liking.</string>
+    <string name="setting_bg_transparency">Background transparency</string>
 </resources>

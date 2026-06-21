@@ -26,4 +26,8 @@
 
     <string name="usage_label">▼モバイル使用</string>
     <string name="no_sim">SIMなし</string>
+
+    <string name="setting_extra_title">追加設定</string>
+    <string name="setting_extra_desc">お好みで調整できます。</string>
+    <string name="setting_bg_transparency">背景の透明度</string>
 </resources>

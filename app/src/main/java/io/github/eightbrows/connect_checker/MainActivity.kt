@@ -79,6 +79,8 @@ class MainActivity : ComponentActivity() {
 fun InstructionScreen() {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val noDataText = stringResource(R.string.no_data)
+    val noPermissionText = stringResource(R.string.no_permission)
 
     // 必要な権限の許可状態を保持
     var hasUsagePermission by remember { mutableStateOf(DataUsage.hasUsageAccess(context)) }
@@ -87,15 +89,18 @@ fun InstructionScreen() {
     var startDayInput by remember { mutableIntStateOf(prefs.getInt("start_day", 1)) }
     var expanded by remember { mutableStateOf(false) }
 
+    var bgAlpha by remember { mutableIntStateOf(prefs.getInt("bg_alpha", 255)) }
+    var transparencyExpanded by remember { mutableStateOf(false) }
+
     // データ使用量を保持する変数
-    var mobileDataUsage by remember { mutableStateOf(context.getString(R.string.no_data)) }
+    var mobileDataUsage by remember { mutableStateOf(noDataText) }
 
     // 画面が開いた時や、起算日が変わった時に自動計算する
     LaunchedEffect(hasUsagePermission, startDayInput) {
-        if (hasUsagePermission) {
-            mobileDataUsage = DataUsage.getMobileDataUsageText(context, startDayInput)
+        mobileDataUsage = if (hasUsagePermission) {
+            DataUsage.getMobileDataUsageText(context, startDayInput)
         } else {
-            mobileDataUsage = context.getString(R.string.no_permission)
+            noPermissionText
         }
     }
 
@@ -289,6 +294,61 @@ fun InstructionScreen() {
                     }
                     .padding(8.dp)
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(stringResource(R.string.setting_extra_title), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2196F3))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(stringResource(R.string.setting_extra_desc), color = Color.DarkGray, fontSize = 14.sp)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val transparencyOptions = listOf(
+                        "0%" to 255, "12.5%" to 223, "25%" to 191, "37.5%" to 159,
+                        "50%" to 128, "62.5%" to 96, "75%" to 64, "87.5%" to 32, "100%" to 0
+                    )
+                    val currentTransparencyLabel =
+                        transparencyOptions.firstOrNull { it.second == bgAlpha }?.first ?: "0%"
+
+                    ExposedDropdownMenuBox(
+                        expanded = transparencyExpanded,
+                        onExpandedChange = { transparencyExpanded = it },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = currentTransparencyLabel,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text(stringResource(R.string.setting_bg_transparency)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = transparencyExpanded) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = transparencyExpanded,
+                            onDismissRequest = { transparencyExpanded = false }
+                        ) {
+                            transparencyOptions.forEach { (label, alpha) ->
+                                DropdownMenuItem(
+                                    text = { Text(label) },
+                                    onClick = {
+                                        bgAlpha = alpha
+                                        transparencyExpanded = false
+                                        prefs.edit { putInt("bg_alpha", alpha) }
+                                        context.sendBroadcast(Intent(context, NetworkWidget::class.java).apply {
+                                            action = "ACTION_CHECK_NETWORK"
+                                        })
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

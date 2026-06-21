@@ -15,6 +15,7 @@ import androidx.core.graphics.toColorInt
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.content.pm.PackageManager
+import androidx.core.graphics.ColorUtils
 
 class NetworkWidget : AppWidgetProvider() {
 
@@ -49,7 +50,11 @@ class NetworkWidget : AppWidgetProvider() {
             val loadingViews = RemoteViews(context.packageName, R.layout.widget_network)
             loadingViews.setTextViewText(R.id.widget_text, context.getString(R.string.widget_updating))
             loadingViews.setTextViewText(R.id.widget_usage_text, "🌀")
-            loadingViews.setInt(R.id.widget_bg, "setBackgroundColor", "#FF9800".toColorInt())
+            val bgAlpha = DataUsage.getBgAlpha(context)
+            loadingViews.setInt(
+                R.id.widget_bg, "setBackgroundColor",
+                ColorUtils.setAlphaComponent("#FF9800".toColorInt(), bgAlpha)
+            )
             appWidgetManager.updateAppWidget(thisWidget, loadingViews)
 
             // onReceive がリターンした後もプロセスを生かしておくための宣言
@@ -128,7 +133,8 @@ class NetworkWidget : AppWidgetProvider() {
         views.setTextViewText(R.id.widget_text, statusText)
         views.setTextViewText(R.id.widget_usage_label, labelText)
         views.setTextViewText(R.id.widget_usage_text, styled)
-        views.setInt(R.id.widget_bg, "setBackgroundColor", bgColor)
+        val bgAlpha = DataUsage.getBgAlpha(context)
+        views.setInt(R.id.widget_bg, "setBackgroundColor", ColorUtils.setAlphaComponent(bgColor, bgAlpha))
 
         // ウィジェット全体タップで更新
         val updateIntent = Intent(context, NetworkWidget::class.java).apply {

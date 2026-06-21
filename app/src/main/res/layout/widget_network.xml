@@ -6,7 +6,6 @@
     android:orientation="horizontal"
     android:background="#9E9E9E"
     android:padding="2dp">
-
     <LinearLayout
         android:id="@+id/widget_click_area"
         android:layout_width="match_parent"
@@ -16,8 +15,7 @@
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true">
-
-        <!-- 上段：回線種別（変更なし） -->
+        <!-- 上段：回線種別 -->
         <TextView
             android:id="@+id/widget_text"
             android:layout_width="match_parent"
@@ -30,11 +28,10 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="14sp"
+            android:autoSizeMinTextSize="6sp"
             android:autoSizeMaxTextSize="48sp"
             android:autoSizeStepGranularity="1sp" />
-
-        <!-- 中段：ラベル行（小さめ。行の高さに合わせて自動縮小） -->
+        <!-- 中段：ラベル行 -->
         <TextView
             android:id="@+id/widget_usage_label"
             android:layout_width="match_parent"
@@ -46,11 +43,10 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="8sp"
+            android:autoSizeMinTextSize="3sp"
             android:autoSizeMaxTextSize="15sp"
             android:autoSizeStepGranularity="1sp" />
-
-        <!-- 下段：数値行（数値だけ1.5倍はコード側で適用） -->
+        <!-- 下段：数値行 -->
         <TextView
             android:id="@+id/widget_usage_text"
             android:layout_width="match_parent"
@@ -63,10 +59,8 @@
             android:includeFontPadding="false"
             android:maxLines="1"
             android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="14sp"
+            android:autoSizeMinTextSize="3sp"
             android:autoSizeMaxTextSize="30sp"
             android:autoSizeStepGranularity="1sp" />
-
     </LinearLayout>
-
 </LinearLayout>

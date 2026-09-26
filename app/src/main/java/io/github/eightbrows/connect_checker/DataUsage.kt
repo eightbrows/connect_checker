@@ -15,9 +15,9 @@ object DataUsage {
     private const val DEFAULT_START_DAY = 1
 
     private const val KEY_BG_ALPHA = "bg_alpha"
-    private const val DEFAULT_BG_ALPHA = 255 // 255 = 不透明
+    private const val DEFAULT_BG_ALPHA = 96 // 透明度 62.5%（0=完全透明 .. 255=不透明）
 
-    /** 背景アルファ（0=完全透明 .. 255=不透明）。未設定なら不透明。 */
+    /** 背景アルファ（0=完全透明 .. 255=不透明）。未設定なら透明度 62.5%。 */
     fun getBgAlpha(context: Context): Int {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getInt(KEY_BG_ALPHA, DEFAULT_BG_ALPHA)
@@ -45,8 +45,9 @@ object DataUsage {
      * 権限がない場合・取得失敗時は、それぞれ専用の文字列を返す。
      */
     fun getMobileDataUsageText(context: Context, startDay: Int = getStartDay(context)): String {
+        val res = AppSettings.localizedContext(context)
         if (!hasUsageAccess(context)) {
-            return context.getString(R.string.no_permission)
+            return res.getString(R.string.no_permission)
         }
 
         val statsManager =
@@ -64,7 +65,7 @@ object DataUsage {
             )
             formatDataSize(bucket.rxBytes + bucket.txBytes)
         } catch (_: Exception) {
-            context.getString(R.string.no_data)
+            res.getString(R.string.no_data)
         }
     }
 

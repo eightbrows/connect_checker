@@ -15,8 +15,8 @@ android {
         applicationId = "io.github.eightbrows.connect_checker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 21
-        versionName = "20260922-D01"
+        versionCode = 22
+        versionName = "20260926-D01"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,6 +47,12 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    // アプリ内で言語を切り替えるため、AAB でも全言語のリソースを同梱する
+    bundle {
+        language {
+            enableSplit = false
+        }
     }
 }
 

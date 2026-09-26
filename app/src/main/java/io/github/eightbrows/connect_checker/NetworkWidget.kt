@@ -11,7 +11,6 @@ import android.net.NetworkCapabilities
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
 import android.widget.RemoteViews
-import androidx.core.graphics.toColorInt
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.content.pm.PackageManager
@@ -41,19 +40,20 @@ class NetworkWidget : AppWidgetProvider() {
         super.onReceive(context, intent)
 
         // ウィジェットタップ時の処理
-        if (intent.action == "ACTION_CHECK_NETWORK") {
+        if (intent.action == AppSettings.ACTION_CHECK_NETWORK) {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val thisWidget = ComponentName(context, NetworkWidget::class.java)
             val appWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget)
+            val res = AppSettings.localizedContext(context)
 
-            // 「更新中」表示を即座に反映
+            // 「更新中」表示を即座に反映（レイアウト既定の文字はシステム言語になるため、3行とも明示的に設定する）
             val loadingViews = RemoteViews(context.packageName, R.layout.widget_network)
-            loadingViews.setTextViewText(R.id.widget_text, context.getString(R.string.widget_updating))
-            loadingViews.setTextViewText(R.id.widget_usage_text, "🌀")
-            val bgAlpha = DataUsage.getBgAlpha(context)
-            loadingViews.setInt(
-                R.id.widget_bg, "setBackgroundColor",
-                ColorUtils.setAlphaComponent("#FF9800".toColorInt(), bgAlpha)
+            applyContent(
+                context, loadingViews,
+                statusText = res.getString(R.string.widget_updating),
+                labelText = res.getString(R.string.usage_label),
+                usageText = "🌀",
+                bgColor = AppSettings.getBgColor(context, AppSettings.ColorTarget.UPDATING)
             )
             appWidgetManager.updateAppWidget(thisWidget, loadingViews)
 
@@ -78,23 +78,22 @@ class NetworkWidget : AppWidgetProvider() {
 
     private fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, isManual: Boolean = false) {
         val views = RemoteViews(context.packageName, R.layout.widget_network)
+        val res = AppSettings.localizedContext(context)
 
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = connectivityManager.activeNetwork
         val capabilities = connectivityManager.getNetworkCapabilities(network)
 
-        var statusText = context.getString(R.string.widget_out_of_service)
-        var bgColor = "#9E9E9E".toColorInt() // 灰色
-
+        var target = AppSettings.ColorTarget.OUT_OF_SERVICE
         if (capabilities != null) {
             if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                statusText = context.getString(R.string.widget_wifi)
-                bgColor = "#2196F3".toColorInt() // 青色
+                target = AppSettings.ColorTarget.WIFI
             } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
-                statusText = context.getString(R.string.widget_mobile)
-                bgColor = "#F44336".toColorInt() // 赤色
+                target = AppSettings.ColorTarget.MOBILE
             }
         }
+        var statusText = res.getString(target.statusRes)
+        val bgColor = AppSettings.getBgColor(context, target)
 
         // 機内モードなら、接続状態に関係なくステータスの後ろに飛行機マークを付ける
         val airplaneOn = Settings.Global.getInt(
@@ -110,7 +109,7 @@ class NetworkWidget : AppWidgetProvider() {
         val usage = if (deviceHasSim(context)) {
             DataUsage.getMobileDataUsageText(context)
         } else {
-            context.getString(R.string.no_sim)
+            res.getString(R.string.no_sim)
         }
 
         // 数値部分（先頭の数字と小数点）だけ1.5倍にする（GB の後ろの接尾辞は無し）
@@ -122,7 +121,7 @@ class NetworkWidget : AppWidgetProvider() {
         }
 
         // 手動更新は動物（更新のたびに変化）、自動更新は時計（⌚）で区別する
-        val label = context.getString(R.string.usage_label)
+        val label = res.getString(R.string.usage_label)
         val labelText = if (isManual) {
             val animals = listOf("🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐑", "🐵", "🐔", "🐶", "🐗", "🐱", "🦭", "🐻")
             label + " " + animals.random()
@@ -130,15 +129,11 @@ class NetworkWidget : AppWidgetProvider() {
             "$label ⌚"
         }
 
-        views.setTextViewText(R.id.widget_text, statusText)
-        views.setTextViewText(R.id.widget_usage_label, labelText)
-        views.setTextViewText(R.id.widget_usage_text, styled)
-        val bgAlpha = DataUsage.getBgAlpha(context)
-        views.setInt(R.id.widget_bg, "setBackgroundColor", ColorUtils.setAlphaComponent(bgColor, bgAlpha))
+        applyContent(context, views, statusText, labelText, styled, bgColor)
 
         // ウィジェット全体タップで更新
         val updateIntent = Intent(context, NetworkWidget::class.java).apply {
-            action = "ACTION_CHECK_NETWORK"
+            action = AppSettings.ACTION_CHECK_NETWORK
         }
         val updatePendingIntent = PendingIntent.getBroadcast(
             context, 0, updateIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
@@ -146,6 +141,26 @@ class NetworkWidget : AppWidgetProvider() {
         views.setOnClickPendingIntent(R.id.widget_click_area, updatePendingIntent)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
+    }
+
+    /** 3行の文字・文字色と背景色（設定の透明度を合成）を設定する */
+    private fun applyContent(
+        context: Context,
+        views: RemoteViews,
+        statusText: CharSequence,
+        labelText: CharSequence,
+        usageText: CharSequence,
+        bgColor: Int
+    ) {
+        val textColor = AppSettings.textColor(bgColor)
+        views.setTextViewText(R.id.widget_text, statusText)
+        views.setTextViewText(R.id.widget_usage_label, labelText)
+        views.setTextViewText(R.id.widget_usage_text, usageText)
+        views.setTextColor(R.id.widget_text, textColor)
+        views.setTextColor(R.id.widget_usage_label, textColor)
+        views.setTextColor(R.id.widget_usage_text, textColor)
+        val bgAlpha = DataUsage.getBgAlpha(context)
+        views.setInt(R.id.widget_bg, "setBackgroundColor", ColorUtils.setAlphaComponent(bgColor, bgAlpha))
     }
 
     /** モバイル回線（SIM）が1つでも入っているか。権限不要。 */

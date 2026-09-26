@@ -22,12 +22,34 @@
     <string name="widget_checking">判定中</string>
     <string name="no_data">---</string>
     <string name="widget_description">現在の接続回線とモバイルデータ使用量を表示します。</string>
-    <string name="open_info_page">公式ページを開く</string>
+    <string name="open_info_page">公式ページを開く ↗</string>
 
-    <string name="usage_label">▼モバイル使用</string>
+    <string name="usage_label">▼モバイル使用量</string>
     <string name="no_sim">SIMなし</string>
 
     <string name="setting_extra_title">追加設定</string>
-    <string name="setting_extra_desc">お好みで調整できます。</string>
     <string name="setting_bg_transparency">背景の透明度</string>
+    <string name="open_license">ライセンス ↗</string>
+    <string name="setting_bg_color">背景色</string>
+    <string name="setting_target_updating">更新中</string>
+    <string name="setting_reset_colors">色を初期値に戻す</string>
+    <string name="setting_preview">プレビュー</string>
+    <string name="setting_wallpaper">壁紙</string>
+    <string name="wallpaper_checker">市松模様</string>
+    <string name="setting_language">言語</string>
+    <string name="setting_language_system">システムに従う</string>
+
+    <string name="color_white">白</string>
+    <string name="color_teal">ティール</string>
+    <string name="color_blue">青</string>
+    <string name="color_indigo">藍</string>
+    <string name="color_purple">紫</string>
+    <string name="color_pink">ピンク</string>
+    <string name="color_red">赤</string>
+    <string name="color_orange">橙</string>
+    <string name="color_yellow">黄</string>
+    <string name="color_olive">オリーブ</string>
+    <string name="color_green">緑</string>
+    <string name="color_black">黒</string>
+    <string name="color_gray">灰</string>
 </resources>

@@ -22,12 +22,36 @@
     <string name="widget_checking">Checking...</string>
     <string name="no_data">---</string>
     <string name="widget_description">Shows your current connection and mobile data usage.</string>
-    <string name="open_info_page">Open official page</string>
+    <string name="open_info_page">Open official page ↗</string>
 
     <string name="usage_label">▼Mobile Usage</string>
     <string name="no_sim">No SIM</string>
 
     <string name="setting_extra_title">Additional settings</string>
-    <string name="setting_extra_desc">Optional — adjust to your liking.</string>
     <string name="setting_bg_transparency">Background transparency</string>
+    <string name="open_license">License ↗</string>
+    <string name="setting_bg_color">Background color</string>
+    <string name="setting_target_updating">Updating</string>
+    <string name="setting_reset_colors">Reset colors to default</string>
+    <string name="setting_preview">Preview</string>
+    <string name="setting_wallpaper">Wallpaper</string>
+    <string name="wallpaper_checker">Checkered</string>
+    <string name="setting_language">Language</string>
+    <string name="setting_language_system">System default</string>
+    <string name="setting_language_ja" translatable="false">日本語</string>
+    <string name="setting_language_en" translatable="false">English</string>
+
+    <string name="color_white">White</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_indigo">Indigo</string>
+    <string name="color_purple">Purple</string>
+    <string name="color_pink">Pink</string>
+    <string name="color_red">Red</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_olive">Olive</string>
+    <string name="color_green">Green</string>
+    <string name="color_black">Black</string>
+    <string name="color_gray">Gray</string>
 </resources>
